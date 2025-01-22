@@ -192,6 +192,11 @@ ion-modal > .ion-page {
   contain: layout style;
 
   height: 100%;
+
+  transform-origin: top;
+  * {
+    transform-origin: top;
+  }
 }
 
 .split-pane-visible > .ion-page.split-pane-main {

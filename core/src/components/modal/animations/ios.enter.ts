@@ -17,7 +17,7 @@ const createEnterAnimation = () => {
 
   const wrapperAnimation = createAnimation().fromTo('transform', 'translateY(100vh)', 'translateY(0vh)');
 
-  return { backdropAnimation, wrapperAnimation, contentAnimation: undefined };
+  return { backdropAnimation, wrapperAnimation, containerAnimation: undefined, contentAnimation: undefined };
 };
 
 /**
@@ -26,14 +26,16 @@ const createEnterAnimation = () => {
 export const iosEnterAnimation = (baseEl: HTMLElement, opts: ModalAnimationOptions): Animation => {
   const { presentingEl, currentBreakpoint, animateContentHeight } = opts;
   const root = getElementRoot(baseEl);
-  const { wrapperAnimation, backdropAnimation, contentAnimation } =
+  const { wrapperAnimation, backdropAnimation, containerAnimation ,contentAnimation } =
     currentBreakpoint !== undefined ? createSheetEnterAnimation(opts) : createEnterAnimation();
 
   backdropAnimation.addElement(root.querySelector('ion-backdrop')!);
 
   wrapperAnimation.addElement(root.querySelectorAll('.modal-wrapper, .modal-shadow')!).beforeStyles({ opacity: 1 });
 
-  contentAnimation?.addElement(baseEl.querySelector('.ion-page')!);
+  containerAnimation?.addElement(baseEl.querySelector('.ion-page')!);
+  const directChildren = Array.from(baseEl.querySelector('.ion-page')!.children);
+  contentAnimation?.addElement(directChildren);
 
   const baseAnimation = createAnimation('entering-base')
     .addElement(baseEl)
@@ -41,7 +43,8 @@ export const iosEnterAnimation = (baseEl: HTMLElement, opts: ModalAnimationOptio
     .duration(500)
     .addAnimation([wrapperAnimation]);
 
-  if (contentAnimation && animateContentHeight) {
+  if (animateContentHeight && containerAnimation && contentAnimation) {
+    baseAnimation.addAnimation(containerAnimation);
     baseAnimation.addAnimation(contentAnimation);
   }
 

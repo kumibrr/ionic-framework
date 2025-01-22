@@ -72,9 +72,13 @@ export const createSheetGesture = (
       { offset: 1, transform: 'translateY(100%)' },
     ],
     BACKDROP_KEYFRAMES: backdropBreakpoint !== 0 ? customBackdrop : defaultBackdrop,
+    CONTAINER_KEYFRAMES: [
+      { offset: 0, transform: 'scaleY(1)' },
+      { offset: 1, transform: 'scaleY(1)' },
+    ],
     CONTENT_KEYFRAMES: [
-      { offset: 0, maxHeight: '100%' },
-      { offset: 1, maxHeight: '0%' },
+      { offset: 0, transform: 'scaleY(1)' },
+      { offset: 1, transform: 'scaleY(1)' },
     ],
   };
 
@@ -88,6 +92,7 @@ export const createSheetGesture = (
   const minBreakpoint = breakpoints[0];
   const wrapperAnimation = animation.childAnimations.find((ani) => ani.id === 'wrapperAnimation');
   const backdropAnimation = animation.childAnimations.find((ani) => ani.id === 'backdropAnimation');
+  const containerAnimation = animation.childAnimations.find((ani) => ani.id === 'containerAnimation');
   const contentAnimation = animation.childAnimations.find((ani) => ani.id === 'contentAnimation');
 
   const enableBackdrop = () => {
@@ -127,6 +132,7 @@ export const createSheetGesture = (
   if (wrapperAnimation && backdropAnimation) {
     wrapperAnimation.keyframes([...SheetDefaults.WRAPPER_KEYFRAMES]);
     backdropAnimation.keyframes([...SheetDefaults.BACKDROP_KEYFRAMES]);
+    containerAnimation?.keyframes([...SheetDefaults.CONTAINER_KEYFRAMES]);
     contentAnimation?.keyframes([...SheetDefaults.CONTENT_KEYFRAMES]);
     animation.progressStart(true, 1 - currentBreakpoint);
 
@@ -338,7 +344,7 @@ export const createSheetGesture = (
         },
       ]);
 
-      if (contentAnimation) {
+      if (shouldRemainOpen && containerAnimation && contentAnimation) {
         /**
          * The modal content should scroll at any breakpoint when scrollAtEdge
          * is disabled. In order to do this, the content needs to be completely
@@ -346,9 +352,13 @@ export const createSheetGesture = (
          * behavior would show the content off the screen and only allow
          * scrolling when the sheet is fully expanded.
          */
+        containerAnimation.keyframes([
+          { offset: 0, transform: `scaleY(${1 - breakpointOffset})` },
+          { offset: 1, transform: `scaleY(${snapToBreakpoint})` },
+        ]);
         contentAnimation.keyframes([
-          { offset: 0, maxHeight: `${(1 - breakpointOffset) * 100}%` },
-          { offset: 1, maxHeight: `${snapToBreakpoint * 100}%` },
+          { offset: 0, transform: `scaleY(${1 / (1 - breakpointOffset)})` },
+          { offset: 1, transform: `scaleY(${ 1 / snapToBreakpoint})` },
         ]);
       }
 
@@ -396,6 +406,7 @@ export const createSheetGesture = (
                   wrapperAnimation.keyframes([...SheetDefaults.WRAPPER_KEYFRAMES]);
                   backdropAnimation.keyframes([...SheetDefaults.BACKDROP_KEYFRAMES]);
                   contentAnimation?.keyframes([...SheetDefaults.CONTENT_KEYFRAMES]);
+                  containerAnimation?.keyframes([...SheetDefaults.CONTAINER_KEYFRAMES]);
                   animation.progressStart(true, 1 - snapToBreakpoint);
                   currentBreakpoint = snapToBreakpoint;
                   onBreakpointChange(currentBreakpoint);
